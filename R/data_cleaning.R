@@ -1,12 +1,25 @@
-# Read the raw dataset from your data folder
-raw_data <- read.csv("data/diabetes.csv")
+# Check dataset size
+dim(data)
 
-# Filter out missing categorical values like 'No Info' to keep the data clean
-cleaned_data <- subset(raw_data, smoking_history != "No Info")
+# Check data types
+str(data)
 
-# Convert categorical character variables to Factors for statistical modeling
-cleaned_data$gender <- as.factor(cleaned_data$gender)
-cleaned_data$smoking_history <- as.factor(cleaned_data$smoking_history)
+# Check missing values
+colSums(is.na(data))
 
-# Save the polished data file back to the folder for downstream scripts
-write.csv(cleaned_data, "data/diabetes_cleaned.csv", row.names = FALSE)
+# Check unique values in categorical columns
+unique(data$gender)
+unique(data$smoking_history)
+
+# Check diabetes distribution
+table(data$diabetes)
+
+# Summary of numerical variables
+summary(data)
+
+sum(duplicated(data))
+
+range(data$age)
+range(data$bmi)
+range(data$HbA1c_level)
+range(data$blood_glucose_level)
