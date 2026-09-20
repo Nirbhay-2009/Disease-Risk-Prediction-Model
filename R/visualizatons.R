@@ -86,3 +86,4 @@ barplot(table(data$gender, data$diabetes),
         xlab = "Gender",
         ylab = "Number of Patients",
         legend = TRUE)
+
