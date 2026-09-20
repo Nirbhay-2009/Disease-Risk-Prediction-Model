@@ -1,20 +1,62 @@
-library(ggplot2)
+# Disease Risk Prediction Using Statistical Modelling
+# Correlation Analysis
 
-# Load data (Assuming Member 1 saved it here)
-df <- read.csv("data/diabetes_cleaned.csv")
+# Load dataset
+data <- read.csv("data/diabetes.csv")
 
-# 1. Compute Coefficients
-pearson_coef  <- cor(df$age, df$blood_glucose_level, method = "pearson")
-spearman_coef <- cor(df$age, df$blood_glucose_level, method = "spearman")
+# Pearson correlation between Age and Blood Glucose
+cor(data$age, data$blood_glucose_level)
 
-print("===== ASSOCIATIONS MATRIX =====")
-print(paste("Pearson Coefficient (r):", round(pearson_coef, 4)))
-print(paste("Spearman Rank Coefficient (rho):", round(spearman_coef, 4)))
+# Pearson correlation between BMI and Blood Glucose
+cor(data$bmi, data$blood_glucose_level)
 
-# 2. Export Graph to graphs/ folder
-png("graphs/02_correlation_scatterplot.png", width = 800, height = 600)
-ggplot(df, aes(x = age, y = blood_glucose_level)) +
-  geom_point(color = "#34495e", alpha = 0.4, size = 2) +
-  labs(title = "Age vs Blood Glucose Association", x = "Age", y = "Blood Glucose Level") +
-  theme_minimal()
-dev.off()
+# Pearson correlation between HbA1c and Blood Glucose
+cor(data$HbA1c_level, data$blood_glucose_level)
+
+# Pearson correlation between Age and BMI
+cor(data$age, data$bmi)
+
+# Correlation matrix
+cor(data[, c("age",
+             "bmi",
+             "HbA1c_level",
+             "blood_glucose_level")])
+
+# Correlation of variables with diabetes
+cor(data$age, data$diabetes)
+cor(data$bmi, data$diabetes)
+cor(data$HbA1c_level, data$diabetes)
+cor(data$blood_glucose_level, data$diabetes)
+
+cor.test(data$HbA1c_level, data$blood_glucose_level)
+cor.test(data$bmi, data$blood_glucose_level)
+
+cor(data$age, data$blood_glucose_level)
+cor(data$bmi, data$blood_glucose_level)
+cor(data$HbA1c_level, data$blood_glucose_level)
+cor(data$age, data$bmi)
+
+cor(data[, c("age",
+             "bmi",
+             "HbA1c_level",
+             "blood_glucose_level")])
+
+# Correlation matrix
+cor_matrix <- cor(data[, c("age",
+                           "bmi",
+                           "HbA1c_level",
+                           "blood_glucose_level")])
+
+print(cor_matrix)
+
+# Correlation with diabetes
+cor(data$age, data$diabetes)
+cor(data$bmi, data$diabetes)
+cor(data$HbA1c_level, data$diabetes)
+cor(data$blood_glucose_level, data$diabetes)
+
+# Correlation significance tests
+cor.test(data$age, data$diabetes)
+cor.test(data$bmi, data$diabetes)
+cor.test(data$HbA1c_level, data$diabetes)
+cor.test(data$blood_glucose_level, data$diabetes)

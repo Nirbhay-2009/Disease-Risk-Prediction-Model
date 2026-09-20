@@ -1,21 +1,40 @@
-library(ggplot2)
+# Disease Risk Prediction Using Statistical Modelling
+# Regression Analysis
 
-df <- read.csv("data/diabetes_cleaned.csv")
+# Load dataset
+data <- read.csv("data/diabetes.csv")
 
-# Fit the line using Least Squares: y = a + bx
-regression_model <- lm(blood_glucose_level ~ bmi, data = df)
+# Simple Linear Regression
+model <- lm(diabetes ~ blood_glucose_level, data = data)
 
-intercept_a <- coef(regression_model)[1]
-slope_b     <- coef(regression_model)[2]
+# Display model summary
+summary(model)
 
-print("===== REGRESSION LINE MODEL =====")
-print(paste("Equation: Glucose = ", round(intercept_a, 2), " + (", round(slope_b, 2), " * BMI)"))
+# Multiple Linear Regression
+multiple_model <- lm(
+  diabetes ~ age + bmi + HbA1c_level + blood_glucose_level,
+  data = data
+)
 
-# Export Graph to graphs/ folder
-png("graphs/03_regression_line.png", width = 800, height = 600)
-ggplot(df, aes(x = bmi, y = blood_glucose_level)) +
-  geom_point(color = "#7f8c8d", alpha = 0.4) +
-  geom_smooth(method = "lm", color = "#e74c3c", se = TRUE) +
-  labs(title = "Linear Regression Model Curve Fitting", x = "BMI", y = "Blood Glucose Level") +
-  theme_minimal()
-dev.off()
+# Display model summary
+summary(multiple_model)
+
+# Logistic Regression
+logistic_model <- glm(
+  diabetes ~ age + bmi + HbA1c_level + blood_glucose_level +
+    hypertension + heart_disease + gender + smoking_history,
+  data = data,
+  family = binomial
+)
+
+# Display model summary
+summary(logistic_model)
+
+# Odds Ratios
+exp(coef(logistic_model))
+
+# Odds Ratio with 95% Confidence Interval
+exp(cbind(
+  Odds_Ratio = coef(logistic_model),
+  confint(logistic_model)
+))
