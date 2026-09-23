@@ -11,7 +11,6 @@ if (file.exists("../data/diabetes.csv")) {
   data <- read.csv("data/diabetes.csv")
 }
 
-
 # Prepare categorical columns
 data$gender <- as.factor(data$gender)
 data$smoking_history <- as.factor(data$smoking_history)
@@ -26,11 +25,12 @@ set.seed(123)
 train_index <- c(
   sample(
     which(data$diabetes == 0),
-    size = 0.8 * sum(data$diabetes == 0)
+    size = floor(0.8 * sum(data$diabetes == 0))
   ),
+  
   sample(
     which(data$diabetes == 1),
-    size = 0.8 * sum(data$diabetes == 1)
+    size = floor(0.8 * sum(data$diabetes == 1))
   )
 )
 
@@ -92,7 +92,7 @@ f1_score <- 2 * precision * sensitivity /
 
 
 # AUC calculation
-# Using ranking method so no extra package is required
+# Ranking method - no extra package required
 
 positive_scores <- test_probability[actual == 1]
 negative_scores <- test_probability[actual == 0]
@@ -103,7 +103,10 @@ auc <- sum(
     negative_scores,
     FUN = ">"
   )
-) / (length(positive_scores) * length(negative_scores))
+) / (
+  length(positive_scores) *
+    length(negative_scores)
+)
 
 
 # ============================================================
@@ -116,7 +119,7 @@ if (dir.exists("../graphs")) {
   graphs_path <- "graphs"
 }
 
-addResourcePath(
+shiny::addResourcePath(
   "graphs",
   normalizePath(graphs_path)
 )
@@ -128,23 +131,25 @@ addResourcePath(
 
 ui <- fluidPage(
   
-  # ----------------------------------------------------------
+  
+  # ==========================================================
   # CSS
-  # ----------------------------------------------------------
+  # ==========================================================
   
   tags$head(
     
     tags$style(HTML("
-
+    
       body {
         margin: 0;
         background-color: #f4f8fc;
         font-family: Arial, sans-serif;
         color: #17365d;
       }
-
+      
+      
       /* HEADER */
-
+      
       .top-header {
         height: 92px;
         background-color: #173f6d;
@@ -154,31 +159,31 @@ ui <- fluidPage(
         padding: 0 35px;
         margin: -15px -15px 0 -15px;
       }
-
+      
       .header-icon {
         font-size: 42px;
         margin-right: 18px;
       }
-
+      
       .header-title {
         font-size: 28px;
         font-weight: bold;
       }
-
+      
       .header-subtitle {
         font-size: 16px;
         margin-top: 5px;
         color: #dbe8f7;
       }
-
+      
       .header-right {
         margin-left: auto;
         font-size: 15px;
       }
-
-
+      
+      
       /* SIDEBAR */
-
+      
       .sidebar-area {
         position: fixed;
         top: 92px;
@@ -190,7 +195,7 @@ ui <- fluidPage(
         padding-top: 20px;
         z-index: 1000;
       }
-
+      
       .nav-button {
         width: 100%;
         padding: 18px 25px;
@@ -202,27 +207,27 @@ ui <- fluidPage(
         text-align: left;
         box-shadow: none !important;
       }
-
+      
       .nav-button:hover {
         background-color: #285b91 !important;
       }
-
+      
       .nav-button.active {
         background-color: #3f86d8 !important;
         border-left: 5px solid #8fc7ff !important;
       }
-
-
+      
+      
       /* MAIN AREA */
-
+      
       .main-area {
         margin-left: 255px;
         padding: 25px 28px;
       }
-
-
+      
+      
       /* INTRO */
-
+      
       .intro-card {
         background-color: #e7f3ff;
         border: 1px solid #cfe4f8;
@@ -230,23 +235,23 @@ ui <- fluidPage(
         padding: 25px;
         margin-bottom: 22px;
       }
-
+      
       .intro-title {
         font-size: 27px;
         font-weight: bold;
         color: #173f6d;
         margin-bottom: 10px;
       }
-
+      
       .intro-text {
         font-size: 16px;
         color: #36516f;
         line-height: 1.5;
       }
-
-
+      
+      
       /* CARDS */
-
+      
       .main-card,
       .page-card {
         background-color: white;
@@ -256,11 +261,11 @@ ui <- fluidPage(
         box-shadow: 0 2px 8px rgba(0,0,0,0.04);
         margin-bottom: 20px;
       }
-
+      
       .main-card {
         min-height: 530px;
       }
-
+      
       .card-title,
       .page-card-title {
         font-size: 22px;
@@ -268,34 +273,34 @@ ui <- fluidPage(
         color: #173f6d;
         margin-bottom: 20px;
       }
-
+      
       .page-text {
         font-size: 16px;
         color: #52697d;
         line-height: 1.6;
       }
-
-
+      
+      
       /* FORM */
-
+      
       .control-label {
         color: #173f6d !important;
         font-weight: bold;
       }
-
+      
       .form-control {
         border-radius: 7px;
         border: 1px solid #d6e0ea;
         height: 43px;
       }
-
+      
       .form-group {
         margin-bottom: 18px;
       }
-
-
+      
+      
       /* PREDICT BUTTON */
-
+      
       .predict-button {
         width: 100%;
         background-color: #2878e3;
@@ -307,68 +312,114 @@ ui <- fluidPage(
         font-weight: bold;
         margin-top: 10px;
       }
-
+      
       .predict-button:hover {
         background-color: #1765c8;
       }
-
-
+      
+      
       /* RESULT */
-
+      
       .result-box {
-        background-color: #eefbf6;
-        border: 1px solid #c9eddf;
         border-radius: 10px;
         padding: 30px;
         text-align: center;
         margin-bottom: 20px;
       }
-
+      
+      .result-box.low-risk {
+        background-color: #eefbf6;
+        border: 1px solid #c9eddf;
+      }
+      
+      .result-box.high-risk {
+        background-color: #fff0f0;
+        border: 1px solid #f2caca;
+      }
+      
       .result-icon {
         font-size: 50px;
+      }
+      
+      .low-risk .result-icon {
         color: #20b77a;
       }
-
+      
+      .high-risk .result-icon {
+        color: #e74c3c;
+      }
+      
       .result-title {
         font-size: 28px;
         font-weight: bold;
+      }
+      
+      .low-risk .result-title {
         color: #18a36c;
       }
-
+      
+      .high-risk .result-title {
+        color: #d63c32;
+      }
+      
       .result-description {
         font-size: 15px;
         color: #52697d;
         margin-top: 12px;
       }
-
+      
+      
+      /* PROBABILITY */
+      
       .probability-box {
-        background-color: #e8f8f3;
         border-radius: 9px;
         padding: 22px;
         text-align: center;
         margin-top: 20px;
       }
-
+      
+      .low-risk .probability-box {
+        background-color: #e8f8f3;
+      }
+      
+      .high-risk .probability-box {
+        background-color: #ffe4e4;
+      }
+      
       .probability-label {
-        color: #178c69;
         font-weight: bold;
         font-size: 16px;
       }
-
+      
+      .low-risk .probability-label {
+        color: #178c69;
+      }
+      
+      .high-risk .probability-label {
+        color: #c0392b;
+      }
+      
       .probability-value {
-        color: #15966d;
         font-size: 34px;
         font-weight: bold;
       }
-
+      
+      .low-risk .probability-value {
+        color: #15966d;
+      }
+      
+      .high-risk .probability-value {
+        color: #d63c32;
+      }
+      
       .probability-class {
         color: #60758a;
         font-size: 13px;
       }
-
-
+      
+      
       /* BMI */
-
+      
       .bmi-box {
         background-color: #edf6ff;
         border: 1px solid #d7e9fa;
@@ -376,21 +427,21 @@ ui <- fluidPage(
         padding: 18px;
         margin-bottom: 20px;
       }
-
+      
       .bmi-label {
         color: #2878c7;
         font-weight: bold;
       }
-
+      
       .bmi-value {
         color: #173f6d;
         font-size: 28px;
         font-weight: bold;
       }
-
-
+      
+      
       /* NOTE */
-
+      
       .note-box {
         background-color: #edf6ff;
         border: 1px solid #cfe4f8;
@@ -399,10 +450,10 @@ ui <- fluidPage(
         color: #52697d;
         font-size: 14px;
       }
-
-
+      
+      
       /* STATISTIC BOX */
-
+      
       .stat-box {
         background-color: white;
         border: 1px solid #e1e8ef;
@@ -411,22 +462,22 @@ ui <- fluidPage(
         text-align: center;
         margin-bottom: 20px;
       }
-
+      
       .stat-title {
         color: #60758a;
         font-size: 15px;
       }
-
+      
       .stat-value {
         color: #173f6d;
         font-size: 30px;
         font-weight: bold;
         margin-top: 8px;
       }
-
-
+      
+      
       /* GRAPH */
-
+      
       .graph-box {
         background-color: white;
         border: 1px solid #e1e8ef;
@@ -435,22 +486,22 @@ ui <- fluidPage(
         margin-bottom: 20px;
         text-align: center;
       }
-
+      
       .graph-title {
         font-size: 18px;
         font-weight: bold;
         color: #173f6d;
         margin-bottom: 12px;
       }
-
+      
       .graph-box img {
         max-width: 100%;
         height: auto;
       }
-
-
+      
+      
       /* PERFORMANCE */
-
+      
       .performance-box {
         background-color: #edf6ff;
         border: 1px solid #d7e9fa;
@@ -459,22 +510,22 @@ ui <- fluidPage(
         text-align: center;
         margin-bottom: 20px;
       }
-
+      
       .performance-value {
         font-size: 30px;
         font-weight: bold;
         color: #173f6d;
       }
-
+      
       .performance-label {
         font-size: 14px;
         color: #60758a;
         margin-top: 5px;
       }
-
-
+      
+      
       /* FOOTER */
-
+      
       .footer {
         margin-top: 25px;
         padding: 18px 5px;
@@ -482,7 +533,7 @@ ui <- fluidPage(
         color: #60758a;
         font-size: 13px;
       }
-
+      
     "))
   ),
   
@@ -500,7 +551,6 @@ ui <- fluidPage(
     ),
     
     div(
-      
       div(
         class = "header-title",
         "Diabetes Risk Prediction System"
@@ -675,6 +725,8 @@ server <- function(input, output, session) {
   
   bmi_value <- reactive({
     
+    req(input$height, input$weight)
+    
     height_m <- input$height / 100
     
     bmi <- input$weight / (height_m ^ 2)
@@ -691,11 +743,29 @@ server <- function(input, output, session) {
     input$predict,
     {
       
+      req(
+        input$gender,
+        input$age,
+        input$height,
+        input$weight,
+        input$hypertension,
+        input$heart_disease,
+        input$hba1c,
+        input$glucose,
+        input$smoking
+      )
+      
+      
+      # Calculate BMI from height and weight
+      bmi <- bmi_value()
+      
+      
+      # Create new patient data
       new_patient <- data.frame(
         
         age = input$age,
         
-        bmi = bmi_value(),
+        bmi = bmi,
         
         HbA1c_level = input$hba1c,
         
@@ -721,6 +791,7 @@ server <- function(input, output, session) {
       )
       
       
+      # Calculate probability
       probability <- predict(
         logistic_model,
         newdata = new_patient,
@@ -728,6 +799,7 @@ server <- function(input, output, session) {
       )
       
       
+      # Classify prediction
       prediction <- ifelse(
         probability >= 0.5,
         1,
@@ -736,12 +808,13 @@ server <- function(input, output, session) {
       
       
       list(
-        probability = probability,
-        prediction = prediction
+        probability = as.numeric(probability),
+        prediction = as.numeric(prediction),
+        bmi = bmi
       )
     },
     
-    ignoreNULL = FALSE
+    ignoreNULL = TRUE
   )
   
   
@@ -772,7 +845,6 @@ server <- function(input, output, session) {
           
           div(
             class = "intro-text",
-            
             "Enter the patient details below to get the predicted diabetes risk using our statistical modelling approach."
           )
         ),
@@ -780,7 +852,9 @@ server <- function(input, output, session) {
         
         fluidRow(
           
+          # --------------------------------------------------
           # PATIENT INFORMATION
+          # --------------------------------------------------
           
           column(
             6,
@@ -859,7 +933,6 @@ server <- function(input, output, session) {
                   selectInput(
                     "hypertension",
                     "Hypertension *",
-                    
                     choices = c(
                       "No" = 0,
                       "Yes" = 1
@@ -873,7 +946,6 @@ server <- function(input, output, session) {
                   selectInput(
                     "heart_disease",
                     "Heart Disease *",
-                    
                     choices = c(
                       "No" = 0,
                       "Yes" = 1
@@ -920,7 +992,6 @@ server <- function(input, output, session) {
                   selectInput(
                     "smoking",
                     "Smoking History *",
-                    
                     choices = c(
                       "never",
                       "current",
@@ -943,7 +1014,9 @@ server <- function(input, output, session) {
           ),
           
           
+          # --------------------------------------------------
           # RESULT
+          # --------------------------------------------------
           
           column(
             6,
@@ -956,45 +1029,7 @@ server <- function(input, output, session) {
                 "▣  Prediction Result"
               ),
               
-              
-              div(
-                class = "result-box",
-                
-                div(
-                  class = "result-icon",
-                  "✓"
-                ),
-                
-                div(
-                  class = "result-title",
-                  textOutput("prediction_result")
-                ),
-                
-                div(
-                  class = "result-description",
-                  textOutput("prediction_description")
-                ),
-                
-                
-                div(
-                  class = "probability-box",
-                  
-                  div(
-                    class = "probability-label",
-                    "Estimated Probability"
-                  ),
-                  
-                  div(
-                    class = "probability-value",
-                    textOutput("probability_result")
-                  ),
-                  
-                  div(
-                    class = "probability-class",
-                    textOutput("probability_class")
-                  )
-                )
-              ),
+              uiOutput("prediction_box"),
               
               
               div(
@@ -1051,13 +1086,14 @@ server <- function(input, output, session) {
           
           div(
             class = "intro-text",
-            
             "Statistical overview of the diabetes dataset used in this project."
           )
         ),
         
         
+        # ----------------------------------------------------
         # DATASET SUMMARY
+        # ----------------------------------------------------
         
         fluidRow(
           
@@ -1128,17 +1164,16 @@ server <- function(input, output, session) {
               
               div(
                 class = "stat-value",
-                
-                sum(
-                  duplicated(data)
-                )
+                sum(duplicated(data))
               )
             )
           )
         ),
         
         
+        # ----------------------------------------------------
         # DIABETES DISTRIBUTION
+        # ----------------------------------------------------
         
         div(
           class = "page-card",
@@ -1154,7 +1189,9 @@ server <- function(input, output, session) {
         ),
         
         
+        # ----------------------------------------------------
         # DESCRIPTIVE STATISTICS
+        # ----------------------------------------------------
         
         div(
           class = "page-card",
@@ -1170,7 +1207,9 @@ server <- function(input, output, session) {
         ),
         
         
-        # CATEGORICAL INFORMATION
+        # ----------------------------------------------------
+        # DATASET INFORMATION
+        # ----------------------------------------------------
         
         div(
           class = "page-card",
@@ -1206,11 +1245,9 @@ server <- function(input, output, session) {
           
           div(
             class = "intro-text",
-            
             "The following graphs show distributions and relationships present in the diabetes dataset."
           )
         ),
-        
         
         uiOutput(
           "graphs_content"
@@ -1237,13 +1274,14 @@ server <- function(input, output, session) {
           
           div(
             class = "intro-text",
-            
             "Performance of the Logistic Regression model on the test dataset."
           )
         ),
         
         
+        # ----------------------------------------------------
         # PERFORMANCE VALUES
+        # ----------------------------------------------------
         
         fluidRow(
           
@@ -1376,7 +1414,9 @@ server <- function(input, output, session) {
         ),
         
         
+        # ----------------------------------------------------
         # CONFUSION MATRIX
+        # ----------------------------------------------------
         
         div(
           class = "page-card",
@@ -1392,7 +1432,9 @@ server <- function(input, output, session) {
         ),
         
         
+        # ----------------------------------------------------
         # ROC CURVE
+        # ----------------------------------------------------
         
         if (
           file.exists(
@@ -1439,7 +1481,6 @@ server <- function(input, output, session) {
           
           div(
             class = "intro-text",
-            
             "Disease Risk Prediction Using Statistical Modelling"
           )
         ),
@@ -1567,6 +1608,10 @@ server <- function(input, output, session) {
   })
   
   
+  # ==========================================================
+  # DESCRIPTIVE STATISTICS
+  # ==========================================================
+  
   output$statistics_table <- renderTable({
     
     data.frame(
@@ -1608,6 +1653,10 @@ server <- function(input, output, session) {
     )
   })
   
+  
+  # ==========================================================
+  # CATEGORY TABLE
+  # ==========================================================
   
   output$category_table <- renderTable({
     
@@ -1653,6 +1702,7 @@ server <- function(input, output, session) {
         "Predicted Diabetes"
       )
     )
+    
   }, rownames = TRUE)
   
   
@@ -1733,6 +1783,8 @@ server <- function(input, output, session) {
     
     rows <- list()
     
+    
+    # Display 13 PNG graphs
     for (i in seq(1, length(graph_files), by = 2)) {
       
       first_graph <- graph_files[[i]]
@@ -1795,7 +1847,9 @@ server <- function(input, output, session) {
     }
     
     
-    # Add interactive 3D graph
+    # --------------------------------------------------------
+    # 14th GRAPH - INTERACTIVE 3D GRAPH
+    # --------------------------------------------------------
     
     three_d_graph <- file.path(
       graphs_path,
@@ -1838,67 +1892,159 @@ server <- function(input, output, session) {
   
   
   # ==========================================================
-  # PREDICTION OUTPUTS
+  # PREDICTION RESULT BOX
   # ==========================================================
   
-  output$prediction_result <- renderText({
+  output$prediction_box <- renderUI({
     
     result <- prediction_result()
+    
+    
+    # --------------------------------------------------------
+    # Before prediction
+    # --------------------------------------------------------
+    
+    if (is.null(result)) {
+      
+      return(
+        div(
+          class = "result-box low-risk",
+          
+          div(
+            class = "result-icon",
+            "?"
+          ),
+          
+          div(
+            class = "result-title",
+            "No Prediction Yet"
+          ),
+          
+          div(
+            class = "result-description",
+            "Enter the patient information and click Predict Diabetes."
+          ),
+          
+          div(
+            class = "probability-box",
+            
+            div(
+              class = "probability-label",
+              "Estimated Probability"
+            ),
+            
+            div(
+              class = "probability-value",
+              "--"
+            ),
+            
+            div(
+              class = "probability-class",
+              "Waiting for prediction"
+            )
+          )
+        )
+      )
+    }
+    
+    
+    # --------------------------------------------------------
+    # Prediction available
+    # --------------------------------------------------------
     
     if (result$prediction == 1) {
       
-      "Diabetes Risk Detected"
+      div(
+        class = "result-box high-risk",
+        
+        div(
+          class = "result-icon",
+          "!"
+        ),
+        
+        div(
+          class = "result-title",
+          "Diabetes Risk Detected"
+        ),
+        
+        div(
+          class = "result-description",
+          "The model predicts an increased diabetes risk."
+        ),
+        
+        div(
+          class = "probability-box",
+          
+          div(
+            class = "probability-label",
+            "Estimated Probability"
+          ),
+          
+          div(
+            class = "probability-value",
+            paste0(
+              round(
+                result$probability * 100,
+                2
+              ),
+              "%"
+            )
+          ),
+          
+          div(
+            class = "probability-class",
+            "(Diabetes Risk)"
+          )
+        )
+      )
       
     } else {
       
-      "No Diabetes"
+      div(
+        class = "result-box low-risk",
+        
+        div(
+          class = "result-icon",
+          "✓"
+        ),
+        
+        div(
+          class = "result-title",
+          "No Diabetes"
+        ),
+        
+        div(
+          class = "result-description",
+          "The model predicts a low predicted risk of diabetes."
+        ),
+        
+        div(
+          class = "probability-box",
+          
+          div(
+            class = "probability-label",
+            "Estimated Probability"
+          ),
+          
+          div(
+            class = "probability-value",
+            paste0(
+              round(
+                result$probability * 100,
+                2
+              ),
+              "%"
+            )
+          ),
+          
+          div(
+            class = "probability-class",
+            "(No Diabetes)"
+          )
+        )
+      )
     }
   })
-  
-  
-  output$prediction_description <- renderText({
-    
-    result <- prediction_result()
-    
-    if (result$prediction == 1) {
-      
-      "The model predicts an increased diabetes risk."
-      
-    } else {
-      
-      "The model predicts a low predicted risk of diabetes."
-    }
-  })
-  
-  
-  output$probability_result <- renderText({
-    
-    result <- prediction_result()
-    
-    paste0(
-      round(
-        result$probability * 100,
-        2
-      ),
-      "%"
-    )
-  })
-  
-  
-  output$probability_class <- renderText({
-    
-    result <- prediction_result()
-    
-    if (result$prediction == 1) {
-      
-      "(Diabetes Risk)"
-      
-    } else {
-      
-      "(No Diabetes)"
-    }
-  })
-  
 }
 
 
