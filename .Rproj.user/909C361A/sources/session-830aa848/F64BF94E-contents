@@ -1,0 +1,512 @@
+class = "performance-label",
+"Precision"
+)
+)
+),
+column(
+4,
+div(
+class = "performance-box",
+div(
+class = "performance-value",
+paste0(
+round(f1_score * 100, 2),
+"%"
+)
+),
+div(
+class = "performance-label",
+"F1-Score"
+)
+)
+),
+column(
+4,
+div(
+class = "performance-box",
+div(
+class = "performance-value",
+round(auc, 3)
+),
+div(
+class = "performance-label",
+"ROC-AUC"
+)
+)
+)
+),
+# ----------------------------------------------------
+# CONFUSION MATRIX
+# ----------------------------------------------------
+div(
+class = "page-card",
+div(
+class = "page-card-title",
+"Confusion Matrix"
+),
+tableOutput(
+"confusion_table"
+)
+),
+# ----------------------------------------------------
+# ROC CURVE
+# ----------------------------------------------------
+if (
+file.exists(
+file.path(
+graphs_path,
+"roc_curve.png"
+)
+)
+) {
+div(
+class = "graph-box",
+div(
+class = "graph-title",
+"ROC Curve"
+),
+img(
+src = "graphs/roc_curve.png",
+style = "max-width: 800px; width: 100%;"
+)
+)
+}
+)
+}
+# ========================================================
+# PAGE 5: ABOUT
+# ========================================================
+else if (page == "about") {
+tagList(
+div(
+class = "intro-card",
+div(
+class = "intro-title",
+"About the Project"
+),
+div(
+class = "intro-text",
+"Disease Risk Prediction Using Statistical Modelling"
+)
+),
+div(
+class = "page-card",
+div(
+class = "page-card-title",
+"Project Objective"
+),
+div(
+class = "page-text",
+"The objective of this project is to use statistical modelling techniques to estimate diabetes risk using selected patient characteristics.",
+br(),
+br(),
+"The project demonstrates data cleaning, descriptive statistics, correlation analysis, regression, data visualization and prediction using R."
+)
+),
+div(
+class = "page-card",
+div(
+class = "page-card-title",
+"Technology Used"
+),
+div(
+class = "page-text",
+"• R Programming",
+br(),
+"• RStudio",
+br(),
+"• R Shiny",
+br(),
+"• Logistic Regression",
+br(),
+"• ggplot2",
+br(),
+"• Plotly"
+)
+),
+div(
+class = "page-card",
+div(
+class = "page-card-title",
+"Dataset"
+),
+div(
+class = "page-text",
+"The project uses the Diabetes Prediction Dataset from Kaggle.",
+br(),
+br(),
+"The final dataset used in the project contains 5,500 records and 9 variables."
+)
+),
+div(
+class = "note-box",
+strong(
+"ⓘ  Educational Purpose"
+),
+br(),
+br(),
+"This application is developed for academic and educational purposes.",
+br(),
+"The prediction should not be considered a medical diagnosis."
+)
+)
+}
+})
+# ==========================================================
+# DATA ANALYSIS OUTPUTS
+# ==========================================================
+output$diabetes_table <- renderTable({
+total <- nrow(data)
+count_0 <- sum(data$diabetes == 0)
+count_1 <- sum(data$diabetes == 1)
+data.frame(
+Status = c(
+"No Diabetes",
+"Diabetes"
+),
+Count = c(
+count_0,
+count_1
+),
+Percentage = c(
+round(count_0 / total * 100, 2),
+round(count_1 / total * 100, 2)
+)
+)
+})
+# ==========================================================
+# DESCRIPTIVE STATISTICS
+# ==========================================================
+output$statistics_table <- renderTable({
+data.frame(
+Variable = c(
+"Age",
+"BMI",
+"HbA1c Level",
+"Blood Glucose Level"
+),
+Mean = c(
+round(mean(data$age), 2),
+round(mean(data$bmi), 2),
+round(mean(data$HbA1c_level), 2),
+round(mean(data$blood_glucose_level), 2)
+),
+Median = c(
+median(data$age),
+median(data$bmi),
+median(data$HbA1c_level),
+median(data$blood_glucose_level)
+),
+Minimum = c(
+min(data$age),
+min(data$bmi),
+min(data$HbA1c_level),
+min(data$blood_glucose_level)
+),
+Maximum = c(
+max(data$age),
+max(data$bmi),
+max(data$HbA1c_level),
+max(data$blood_glucose_level)
+)
+)
+})
+# ==========================================================
+# CATEGORY TABLE
+# ==========================================================
+output$category_table <- renderTable({
+data.frame(
+Variable = c(
+"Female",
+"Male",
+"Hypertension",
+"Heart Disease"
+),
+Count = c(
+sum(data$gender == "Female"),
+sum(data$gender == "Male"),
+sum(data$hypertension == 1),
+sum(data$heart_disease == 1)
+)
+)
+})
+# ==========================================================
+# CONFUSION MATRIX
+# ==========================================================
+output$confusion_table <- renderTable({
+data.frame(
+Actual_No_Diabetes = c(
+TN,
+FP
+),
+Actual_Diabetes = c(
+FN,
+TP
+),
+row.names = c(
+"Predicted No Diabetes",
+"Predicted Diabetes"
+)
+)
+}, rownames = TRUE)
+# ==========================================================
+# VISUALIZATION PAGE
+# ==========================================================
+output$graphs_content <- renderUI({
+graph_files <- list(
+list(
+"Diabetes Distribution",
+"diabetes_distribution.png"
+),
+list(
+"Gender Distribution",
+"gender_distribution.png"
+),
+list(
+"Hypertension Distribution",
+"hypertension_distribution.png"
+),
+list(
+"Heart Disease Distribution",
+"heart_disease_distribution.png"
+),
+list(
+"Smoking History Distribution",
+"smoking_history_distribution.png"
+),
+list(
+"Age Distribution",
+"age_distribution.png"
+),
+list(
+"BMI Distribution",
+"bmi_distribution.png"
+),
+list(
+"HbA1c Level Distribution",
+"hba1c_distribution.png"
+),
+list(
+"Blood Glucose Level Distribution",
+"blood_glucose_distribution.png"
+),
+list(
+"HbA1c Level vs Blood Glucose Level",
+"hba1c_vs_glucose.png"
+),
+list(
+"BMI vs Blood Glucose Level",
+"bmi_vs_glucose.png"
+),
+list(
+"Age vs Blood Glucose Level",
+"age_vs_glucose.png"
+),
+list(
+"Age vs HbA1c Level",
+"age_vs_hba1c.png"
+)
+)
+rows <- list()
+# Display 13 PNG graphs
+for (i in seq(1, length(graph_files), by = 2)) {
+first_graph <- graph_files[[i]]
+first_box <- div(
+class = "graph-box",
+div(
+class = "graph-title",
+first_graph[[1]]
+),
+img(
+src = paste0(
+"graphs/",
+first_graph[[2]]
+)
+)
+)
+if (i + 1 <= length(graph_files)) {
+second_graph <- graph_files[[i + 1]]
+second_box <- div(
+class = "graph-box",
+div(
+class = "graph-title",
+second_graph[[1]]
+),
+img(
+src = paste0(
+"graphs/",
+second_graph[[2]]
+)
+)
+)
+} else {
+second_box <- div()
+}
+rows[[length(rows) + 1]] <- fluidRow(
+column(
+6,
+first_box
+),
+column(
+6,
+second_box
+)
+)
+}
+# --------------------------------------------------------
+# 14th GRAPH - INTERACTIVE 3D GRAPH
+# --------------------------------------------------------
+three_d_graph <- file.path(
+graphs_path,
+"age_hba1c_glucose_3d.html"
+)
+if (file.exists(three_d_graph)) {
+rows[[length(rows) + 1]] <- div(
+class = "graph-box",
+div(
+class = "graph-title",
+"Age vs HbA1c Level vs Blood Glucose Level"
+),
+tags$iframe(
+src = "graphs/age_hba1c_glucose_3d.html",
+style = "width:100%; height:600px; border:none;"
+)
+)
+}
+tagList(rows)
+})
+# ==========================================================
+# BMI OUTPUT
+# ==========================================================
+output$bmi_result <- renderText({
+bmi_value()
+})
+# ==========================================================
+# PREDICTION RESULT BOX
+# ==========================================================
+output$prediction_box <- renderUI({
+result <- prediction_result()
+# --------------------------------------------------------
+# Before prediction
+# --------------------------------------------------------
+if (is.null(result)) {
+return(
+div(
+class = "result-box low-risk",
+div(
+class = "result-icon",
+"?"
+),
+div(
+class = "result-title",
+"No Prediction Yet"
+),
+div(
+class = "result-description",
+"Enter the patient information and click Predict Diabetes."
+),
+div(
+class = "probability-box",
+div(
+class = "probability-label",
+"Estimated Probability"
+),
+div(
+class = "probability-value",
+"--"
+),
+div(
+class = "probability-class",
+"Waiting for prediction"
+)
+)
+)
+)
+}
+# --------------------------------------------------------
+# Prediction available
+# --------------------------------------------------------
+if (result$prediction == 1) {
+div(
+class = "result-box high-risk",
+div(
+class = "result-icon",
+"!"
+),
+div(
+class = "result-title",
+"Diabetes Risk Detected"
+),
+div(
+class = "result-description",
+"The model predicts an increased diabetes risk."
+),
+div(
+class = "probability-box",
+div(
+class = "probability-label",
+"Estimated Probability"
+),
+div(
+class = "probability-value",
+paste0(
+round(
+result$probability * 100,
+2
+),
+"%"
+)
+),
+div(
+class = "probability-class",
+"(Diabetes Risk)"
+)
+)
+)
+} else {
+div(
+class = "result-box low-risk",
+div(
+class = "result-icon",
+"✓"
+),
+div(
+class = "result-title",
+"No Diabetes"
+),
+div(
+class = "result-description",
+"The model predicts a low predicted risk of diabetes."
+),
+div(
+class = "probability-box",
+div(
+class = "probability-label",
+"Estimated Probability"
+),
+div(
+class = "probability-value",
+paste0(
+round(
+result$probability * 100,
+2
+),
+"%"
+)
+),
+div(
+class = "probability-class",
+"(No Diabetes)"
+)
+)
+)
+}
+})
+}
+# ============================================================
+# 8. RUN APPLICATION
+# ============================================================
+shinyApp(
+ui = ui,
+server = server
+)
